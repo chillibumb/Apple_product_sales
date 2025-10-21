@@ -3,83 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apple 产品销售数据可视化仪表盘</title>
+    <title>Apple 商业智能仪表盘</title>
     
-    <!-- 引入 Chart.js 库 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
-        /* --- 页面整体样式 --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #f5f5f7;
             color: #1d1d1f;
             margin: 0;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
-
-        /* --- 主容器 --- */
         .container {
-            width: 100%;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 2.2em; margin-bottom: 8px; }
+        .header p { font-size: 1.1em; color: #6e6e73; }
 
-        /* --- 头部信息 --- */
-        .header {
+        /* KPI 指标卡 布局 */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .kpi-card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             text-align: center;
-            margin-bottom: 40px;
         }
-        .header h1 {
+        .kpi-card .value {
             font-size: 2.5em;
-            margin-bottom: 10px;
+            font-weight: 600;
+            color: #007aff; /* Apple Blue */
+            margin: 10px 0;
         }
-        .header p {
-            font-size: 1.2em;
+        .kpi-card .label {
+            font-size: 1em;
             color: #6e6e73;
         }
 
-        /* --- 图表网格布局 --- */
+        /* 图表网格布局 */
         .charts-grid {
             display: grid;
-            grid-template-columns: 1fr; /* 移动端默认单列 */
-            gap: 30px;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
         }
-
-        /* 在大于768px的屏幕上，变为两列布局 */
-        @media (min-width: 768px) {
-            .charts-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
         }
         
-        /* 在大于1024px的屏幕上，让第一个图表更宽 */
-        @media (min-width: 1024px) {
-            .charts-grid {
-                grid-template-columns: 2fr 1fr;
-            }
-        }
-
-
-        /* --- 单个图表容器样式 --- */
         .chart-container {
             background-color: #ffffff;
             padding: 25px;
-            border-radius: 20px;
+            border-radius: 18px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            /* 为了让图表自适应容器大小 */
             position: relative;
-            height: 450px; 
+            height: 400px;
         }
 
-        /* --- 页脚 --- */
         .footer {
             text-align: center;
-            margin-top: 50px;
+            margin-top: 40px;
             color: #86868b;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -87,168 +78,134 @@
 
     <div class="container">
         <div class="header">
-            <h1>Apple 产品销售数据可视化</h1>
-            <p>展示各产品线在不同季度的销售额和销量趋势 (注：数据为演示所用)</p>
+            <h1>Apple 商业智能仪表盘</h1>
+            <p>基于大数据平台聚合分析的销售业绩</p>
         </div>
 
+        <!-- KPI 指标卡区域 -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="label">年度总收入 (YTD)</div>
+                <div class="value" id="kpi-total-revenue">--</div>
+                <div class="label">十亿美元</div>
+            </div>
+            <div class="kpi-card">
+                <div class="label">同比增长率 (YoY)</div>
+                <div class="value" id="kpi-yoy-growth">--</div>
+                <div class="label">%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="label">核心收入产品</div>
+                <div class="value" id="kpi-top-product">--</div>
+                <div class="label">贡献收入 <span id="kpi-top-product-revenue">--</span> 亿</div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
         <div class="charts-grid">
-            <!-- 第一个图表：销售额趋势（折线图） -->
-            <div class="chart-container">
+            <!-- 左侧大图表 -->
+            <div class="chart-container" style="grid-column: 1; height: 500px;">
                 <canvas id="revenueChart"></canvas>
             </div>
-
-            <!-- 第二个图表：最新季度销量（条形图） -->
-            <div class="chart-container">
-                <canvas id="salesVolumeChart"></canvas>
+            
+            <!-- 右侧两个小图表 -->
+            <div style="grid-column: 2; display: flex; flex-direction: column; gap: 20px;">
+                <div class="chart-container">
+                    <canvas id="revenueMixChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="salesVolumeChart"></canvas>
+                </div>
             </div>
         </div>
 
         <div class="footer">
-            <p>&copy; 2024 数据可视化仪表盘. All Rights Reserved.</p>
+            <p>数据更新于: <span id="last-updated">--</span></p>
         </div>
     </div>
 
     <script>
-        // 当整个页面加载完毕后，再执行JavaScript代码
-        document.addEventListener('DOMContentLoaded', function () {
-            
-            // =================================================================
-            // 1. 销售额趋势图 (折线图)
-            // =================================================================
-            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-            
-            // --- 在这里修改你的数据 ---
-            const revenueLabels = ['2023 Q1', '2023 Q2', '2023 Q3', '2023 Q4', '2024 Q1'];
-            const iphoneRevenue = [110, 95, 98, 120, 115]; // iPhone销售额 (单位: 十亿美元)
-            const macRevenue = [40, 35, 38, 45, 42];      // Mac销售额
-            const ipadRevenue = [30, 25, 28, 35, 32];      // iPad销售额
-            const wearablesRevenue = [50, 55, 60, 70, 68]; // 可穿戴设备及其他
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const response = await fetch('data.json');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
 
-            new Chart(revenueCtx, {
-                type: 'line', // 图表类型：折线图
-                data: {
-                    labels: revenueLabels,
-                    datasets: [
-                        {
-                            label: 'iPhone',
-                            data: iphoneRevenue,
-                            borderColor: 'rgba(0, 122, 255, 1)', // 苹果蓝
-                            backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                            fill: true,
-                            tension: 0.3 // 使线条平滑
-                        },
-                        {
-                            label: 'Mac',
-                            data: macRevenue,
-                            borderColor: 'rgba(134, 134, 139, 1)', // 深灰色
-                            backgroundColor: 'rgba(134, 134, 139, 0.1)',
-                            fill: true,
-                            tension: 0.3
-                        },
-                        {
-                            label: 'iPad',
-                            data: ipadRevenue,
-                            borderColor: 'rgba(255, 149, 0, 1)', // 橙色
-                            backgroundColor: 'rgba(255, 149, 0, 0.1)',
-                            fill: true,
-                            tension: 0.3
-                        },
-                        {
-                            label: '可穿戴设备等',
-                            data: wearablesRevenue,
-                            borderColor: 'rgba(52, 199, 89, 1)', // 绿色
-                            backgroundColor: 'rgba(52, 199, 89, 0.1)',
-                            fill: true,
-                            tension: 0.3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true, // 响应式
-                    maintainAspectRatio: false, // 允许图表填充容器
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: '各产品线销售额趋势',
-                            font: { size: 18 }
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: '销售额 (十亿美元)'
-                            }
-                        }
-                    }
-                }
-            });
+            // 填充KPI数据
+            document.getElementById('kpi-total-revenue').textContent = data.kpi.total_revenue_ytd;
+            document.getElementById('kpi-yoy-growth').textContent = data.kpi.yoy_growth;
+            document.getElementById('kpi-top-product').textContent = data.kpi.top_product;
+            document.getElementById('kpi-top-product-revenue').textContent = data.kpi.top_product_revenue;
+            document.getElementById('last-updated').textContent = data.last_updated;
 
+            // 渲染所有图表
+            renderRevenueChart(data.revenue_trends);
+            renderRevenueMixChart(data.revenue_mix_latest_quarter);
+            renderSalesVolumeChart(data.sales_volume_latest_quarter);
 
-            // =================================================================
-            // 2. 最新季度销量图 (条形图)
-            // =================================================================
-            const salesVolumeCtx = document.getElementById('salesVolumeChart').getContext('2d');
+        } catch (error) {
+            console.error('无法加载仪表盘数据:', error);
+            document.body.innerHTML = '<h1>数据加载失败，请检查 data.json 文件或网络连接。</h1>';
+        }
+    });
 
-            // --- 在这里修改你的数据 ---
-            const latestQuarter = '2024 Q1';
-            const productCategories = ['iPhone', 'Mac', 'iPad', '可穿戴设备等'];
-            const salesVolumes = [95, 15, 22, 40]; // 最新季度销量 (单位: 百万台)
-            
-            new Chart(salesVolumeCtx, {
-                type: 'bar', // 图表类型：条形图
-                data: {
-                    labels: productCategories,
-                    datasets: [{
-                        label: `销量 (${latestQuarter})`,
-                        data: salesVolumes,
-                        backgroundColor: [
-                            'rgba(0, 122, 255, 0.8)',
-                            'rgba(134, 134, 139, 0.8)',
-                            'rgba(255, 149, 0, 0.8)',
-                            'rgba(52, 199, 89, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(0, 122, 255, 1)',
-                            'rgba(134, 134, 139, 1)',
-                            'rgba(255, 149, 0, 1)',
-                            'rgba(52, 199, 89, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `最新季度产品销量 (${latestQuarter})`,
-                            font: { size: 18 }
-                        },
-                        legend: {
-                            display: false // 条形图通常不需要图例
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: '销量 (百万台)'
-                            }
-                        }
-                    }
-                }
-            });
+    // 通用的图表配置
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'top' },
+            title: { display: true, font: { size: 16 } }
+        }
+    };
 
+    function renderRevenueChart(data) {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    { label: 'iPhone', data: data.datasets.iphone, borderColor: '#007aff', tension: 0.3, fill: true },
+                    { label: 'Mac', data: data.datasets.mac, borderColor: '#8e8e93', tension: 0.3, fill: true },
+                    { label: 'iPad', data: data.datasets.ipad, borderColor: '#ff9500', tension: 0.3, fill: true },
+                    { label: '可穿戴设备等', data: data.datasets.wearables, borderColor: '#34c759', tension: 0.3, fill: true }
+                ]
+            },
+            options: { ...chartOptions, plugins: { ...chartOptions.plugins, title: { ...chartOptions.plugins.title, text: '各产品线收入趋势 (十亿美元)' } } }
         });
-    </script>
+    }
 
+    function renderRevenueMixChart(data) {
+        const ctx = document.getElementById('revenueMixChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    data: data.revenue,
+                    backgroundColor: ['#007aff', '#8e8e93', '#ff9500', '#34c759']
+                }]
+            },
+            options: { ...chartOptions, plugins: { ...chartOptions.plugins, title: { ...chartOptions.plugins.title, text: '最新季度收入构成' } } }
+        });
+    }
+
+    function renderSalesVolumeChart(data) {
+        const ctx = document.getElementById('salesVolumeChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: '销量',
+                    data: data.volumes,
+                    backgroundColor: ['#007aff', '#8e8e93', '#ff9500', '#34c759']
+                }]
+            },
+            options: { ...chartOptions, plugins: { ...chartOptions.plugins, legend: { display: false }, title: { ...chartOptions.plugins.title, text: '最新季度销量 (百万台)' } } }
+        });
+    }
+    </script>
 </body>
 </html>
